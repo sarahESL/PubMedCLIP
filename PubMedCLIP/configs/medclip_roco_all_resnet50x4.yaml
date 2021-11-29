@@ -1,0 +1,29 @@
+NAME: 'MEDCLIP.RESNET50x4.ROCO.32batchsize.50epoch'
+OUTPUT_DIR: './output/medclip/resnet50x4/ROCO'
+RESULTS_DIR: './output/medclip/ROCO/results'
+CPU_MODE: False
+INPUT_SIZE: (288, 288)
+
+DATASET:
+  DATASET: 'ROCO'
+  DATA_TYPE: 'jpg'
+  TRAIN_JSON: "./data/train_dataset.json"
+  VALID_JSON: "./data/validation_dataset.json"
+  DATA_DIR: './data'
+
+LOSS:
+  LOSS_TYPE: 'CrossEntropy'
+
+TRAIN:
+  MAX_SEQ_LENGTH: 77 
+  BATCH_SIZE: 32 
+  N_EPOCH: 50 
+  NUM_WORKERS: 2 
+  RESUME: False 
+  INPUT_SNAPSHOT: "" 
+  VISION_ENCODER: "RN50x4"
+  OPTIMIZER:
+    TYPE: 'ADAM'
+    BASE_LR: 1e-5 
+    WEIGHT_DECAY: 5e-4 
+    EPS: 1e-6
