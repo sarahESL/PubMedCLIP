@@ -76,7 +76,7 @@ def train(cfg, train_loader, eval_loader, device):
             logits_per_text *= (np.exp(0.01) / np.exp(0.07))
 
             ground_truth = torch.arange(cfg.TRAIN.BATCH_SIZE, dtype=torch.long, device=device)
-            lambdaa = 0.7
+            lambdaa = 0.5
             train_total_loss = lambdaa*(loss_img(logits_per_image, ground_truth)) + (1-lambdaa)* (loss_txt(logits_per_text, ground_truth))
             train_total_loss.backward()
             if device == "cpu":
