@@ -1,7 +1,7 @@
 # PubMedCLIP 
 Source code for reproducing PubMedCLIP by fine-tuning CLIP using image--text pairs extracted from PubMed articles as provided in the ROCO dataset.
 <br>
-The fine-tuned PubMedCLIP models with ViT32, RN50 and RN50x4 visual encoders are also provided on [OneDrive](https://1drv.ms/u/s!ApXgPqe9kykTgn9wfsfX8JN0kjo-?e=dheCuW). In case of access permission issues, open an issue on this repository or contact <sedigheh.eslami@gmail.com>.
+The fine-tuned PubMedCLIP models with ViT32, RN50 and RN50x4 visual encoders are also provided on [OneDrive](https://1drv.ms/u/s!ApXgPqe9kykTgwD4Np3-f7ODAot8?e=zLVlJ2). In case of access permission issues, open an issue on this repository or contact <sedigheh.eslami@gmail.com>.
 <br>
 ## How to use
 This project requires Python 3.7 or newer.
