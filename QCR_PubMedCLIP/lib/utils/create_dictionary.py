@@ -73,26 +73,25 @@ class Dictionary(object):
         return len(self.idx2word)
 
 
-def create_dictionary(dataroot):
+def create_dictionary(dataroot, dataset_name, train_file, test_file):
     dictionary = Dictionary()
     questions = []
-    files = ['train.json', 'test.json']
+    files = [train_file, test_file]
     for path in files:
         data_path = os.path.join(data, path)
         with open(data_path) as f:
             d = json.load(f)
         df = pd.DataFrame(d)
-        #df_en = df[df['q_lang']=="en"]
+        if dataset_name.lower() in ["slake", "vqa-slake", "vqa_slake"]:
+            df = df[df['q_lang']=="en"]
         print("processing the {}".format(path))
-        #raw = df_en[['img_id', 'question', 'answer']]
-        raw = df[['img_id', 'question', 'answer', 'q_lang']]
-        for id, row in raw.iterrows():
-            if row['q_lang'] == "en":
-                dictionary.tokenize(row['question'], True)     #row[0]: id , row[1]: question , row[2]: answer
+        for id, row in df.iterrows():
+            dictionary.tokenize(row['question'], True)     #row[0]: id , row[1]: question , row[2]: answer
 
     return dictionary
 
 def create_glove_embedding_init(idx2word, glove_file):
+    print('creating glove embeddings...')
     word2emb = {}
     with open(glove_file, 'r') as f:
         entries = f.readlines()
@@ -115,9 +114,15 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description="Med VQA")
     parser.add_argument("inputpath", type=str, help="Path to input data")
+    parser.add_argument("--dataset", type=str, help="Name of the dataset", default="slake")
+    parser.add_argument("--trainfile", type=str, help="Name of the train file", default="train.json")
+    parser.add_argument("--testfile", type=str, help="Name of the test file", default="test.json")
     args = parser.parse_args()
     data = args.inputpath
-    d = create_dictionary(data)
+    dataset = args.dataset
+    train_file = args.trainfile
+    test_file = args.testfile
+    d = create_dictionary(data, dataset, train_file, test_file)
     d.dump_to_file(data + '/dictionary.pkl')
 
     d = Dictionary.load_from_file(data + '/dictionary.pkl')
@@ -126,3 +131,4 @@ if __name__ == '__main__':
     glove_file = glove_path + '/glove.6B/glove.6B.%dd.txt' % emb_dim
     weights, word2emb = create_glove_embedding_init(d.idx2word, glove_file)
     np.save(data + '/glove6b_init_%dd.npy' % emb_dim, weights)
+    print("Process finished successfully!")

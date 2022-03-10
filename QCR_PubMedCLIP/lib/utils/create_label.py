@@ -49,7 +49,7 @@ contractions = {
     "there's", "theyd": "they'd", "theyd've": "they'd've", "they'dve": \
     "they'd've", "theyll": "they'll", "theyre": "they're", "theyve": \
     "they've", "twas": "'twas", "wasnt": "wasn't", "wed've": \
-    "we'd've", "we'dve": "we'd've", "weve": "we've", "werent": 
+    "we'd've", "we'dve": "we'd've", "weve": "we've", "werent":
     "weren't", "whatll": "what'll", "whatre": "what're", "whats": \
     "what's", "whatve": "what've", "whens": "when's", "whered": \
     "where'd", "wheres": "where's", "whereve": "where've", "whod": \
@@ -118,11 +118,11 @@ def filter_answers(train_qa_pairs, val_qa_pairs, min_occurence):
     """
     occurence = {}
     qa_pairs = train_qa_pairs.append(val_qa_pairs)
+    qa_pairs['answer'] = qa_pairs['answer'].apply(lambda x: str(x))
 
     for id, row in qa_pairs.iterrows(): # row:[id,ques,ans]
         gtruth = row['answer']
         gtruth = ' '.join(gtruth.split())
-        # gtruth = preprocess_answer(gtruth)
         if gtruth not in occurence:
             occurence[gtruth] = set()
         occurence[gtruth].add(row['qid'])
@@ -140,13 +140,13 @@ def filter_answers_open_close(train_qa_pairs, val_qa_pairs, min_occurence):
     occurence_open = {}
     occurence_close = {}
     qa_pairs = train_qa_pairs.append(val_qa_pairs)
+    qa_pairs['answer'] = qa_pairs['answer'].apply(lambda x: str(x))
     qa_pairs_open = qa_pairs[qa_pairs['answer_type']=="OPEN"]
     qa_pairs_close = qa_pairs[qa_pairs['answer_type']=="CLOSED"]
 
     for id, row in qa_pairs_open.iterrows(): # row:[id,ques,ans]
         gtruth = row['answer']
         gtruth = ' '.join(gtruth.split())
-        # gtruth = preprocess_answer(gtruth)
         if gtruth not in occurence_open:
             occurence_open[gtruth] = set()
         occurence_open[gtruth].add(row['qid'])
@@ -159,7 +159,6 @@ def filter_answers_open_close(train_qa_pairs, val_qa_pairs, min_occurence):
     for id, row in qa_pairs_close.iterrows(): # row:[id,ques,ans]
         gtruth = row['answer']
         gtruth = ' '.join(gtruth.split())
-        # gtruth = preprocess_answer(gtruth)
         if gtruth not in occurence_close:
             occurence_close[gtruth] = set()
         occurence_close[gtruth].add(row['qid'])
@@ -216,6 +215,9 @@ def create_ans2label(occurence, train_qa_pairs, val_qa_pairs, filename="trainval
     print('ans2lab', len(ans2label))
     print('lab2abs', len(label2ans))
 
+    if not os.path.exists(os.path.join(root, "cache")):
+        os.mkdir(os.path.join(root, "cache"))
+
     file = os.path.join(root, "cache", 'trainval_ans2label.pkl')
     cPickle.dump(ans2label, open(file, 'wb'))
     file = os.path.join(root, "cache", f'trainval_label2ans.pkl')
@@ -249,31 +251,19 @@ def compute_target(answers_dset, ans2label, intersection, name, image_id_col="id
         answer_type = qa_pair['answer_type']
         if (answers in intersection) and (answer_type == "OPEN"):
             answers = answers + "#"
-        # answer_count = {}
-        # for answer in answers:
-        #     answer_ = answer['answer']
-        #     answer_count[answer_] = answer_count.get(answer_, 0) + 1
-        if answer_type == "OPEN":
-            assert ans2label[answers] > len(close_answers)-1
 
         labels = []
         scores = []
         if answers in ans2label:
             scores.append(1.)
             labels.append(ans2label[answers])
-        # for answer in answer_count:
-        #     if answer not in ans2label:
-        #         continue
-        #     labels.append(ans2label[answer])
-        #     score = get_score(answer_count[answer])
-        #     scores.append(score)
         if with_type:
-            if qa_pair['answer_type'] == "CLOSED":
+            if qa_pair['answer_type'].strip().lower() == "closed":
                 a_type = 0
-            elif qa_pair['answer_type'] == "OPEN":
+            elif qa_pair['answer_type'].strip().lower() == "open":
                 a_type = 1
             else:
-                raise ValueError("Unsupported answer type!")
+                raise ValueError(f"Unsupported answer type: {qa_pair['answer_type']}!")
             target.append({
                 'qid': qa_pair['qid'],
                 'img_name': qa_pair[image_id_col],
@@ -299,46 +289,47 @@ def compute_target(answers_dset, ans2label, intersection, name, image_id_col="id
 if __name__ == '__main__' :
     parser = argparse.ArgumentParser(description="Med VQA")
     parser.add_argument("inputpath", type=str, help="Path to input data")
+    parser.add_argument("--dataset", type=str, help="Name of the dataset", default="slake")
+    parser.add_argument("--trainfile", type=str, help="Name of the train file", default="train.json")
+    parser.add_argument("--testfile", type=str, help="Name of the test file", default="test.json")
     args = parser.parse_args()
     data = args.inputpath
-    train_path = os.path.join(data,'train.json')
+    dataset = args.dataset
+    train_file = args.trainfile
+    test_file = args.testfile
+
+    train_path = os.path.join(data, train_file)
     with open(train_path) as f:
         d = json.load(f)
     train = pd.DataFrame(d)
-    train_en = train[train['q_lang']=="en"]
-    train_qa_pairs = train_en[['img_id', 'img_name', 'qid', 'answer', 'answer_type']]
 
-    validate_path = os.path.join(data,'test.json')
+    validate_path = os.path.join(data, test_file)
     with open(validate_path) as f:
         dd = json.load(f)
     val = pd.DataFrame(dd)
-    val_en = val[val['q_lang']=="en"]
-    val_qa_pairs = val_en[['img_id', 'img_name', 'qid', 'answer', 'answer_type']]
+    img_col = "image_name"
+    if dataset.lower() in ["slake", "vqa_slake", "vqa-slake"]:
+        train = train[train['q_lang']=="en"]
+        val = val[val['q_lang']=="en"]
+        img_col = "img_name"
+
+    train_qa_pairs = train[[img_col, 'qid', 'answer', 'answer_type']]
+    val_qa_pairs = val[[img_col, 'qid', 'answer', 'answer_type']]
 
     occurence = filter_answers(train_qa_pairs, val_qa_pairs, 0)  # select the answer with frequence over min_occurence
     open_occurence, close_occurence = filter_answers_open_close(train_qa_pairs, val_qa_pairs, 0)  # select the answer with frequence over min_occurence
 
     label_path = data + 'cache/trainval_ans2label.pkl'
-    #open_label_path = data + 'cache/open_ans2label.pkl'
-    #close_label_path = data + 'cache/close_ans2label.pkl'
     if os.path.isfile(label_path):
         print('found %s' % label_path)
         total_ans2label = cPickle.load(open(label_path, 'rb'))
     else:
         total_ans2label, intersection = create_ans2label(occurence, train_qa_pairs, val_qa_pairs, filename="trainval", root=data)     # create ans2label and label2ans
-    #if os.path.isfile(open_label_path):
-    #    print('found %s' % open_label_path)
-    #    open_ans2label = cPickle.load(open(open_label_path, 'rb'))
-    #else:
-    #    open_ans2label = create_ans2label(open_occurence, filename="open", root=data)     # create ans2label and label2ans
-    #if os.path.isfile(close_label_path):
-    #    print('found %s' % close_label_path)
-    #    close_ans2label = cPickle.load(open(close_label_path, 'rb'))
-    #else:
-    #    close_ans2label = create_ans2label(close_occurence, filename="close", root=data)     # create ans2label and label2ans
 
-    compute_target(train_qa_pairs, total_ans2label, intersection, 'train', 'img_name', data) #dump train target to .pkl {question,image_name,labels,scores}
-    compute_target(train_qa_pairs, total_ans2label, intersection, 'train', 'img_name', data, with_type=True) #dump train target to .pkl {question,image_name,labels,scores}
+    compute_target(train_qa_pairs, total_ans2label, intersection, 'train', img_col, data) #dump train target to .pkl {question,image_name,labels,scores}
+    compute_target(train_qa_pairs, total_ans2label, intersection, 'train', img_col, data, with_type=True) #dump train target to .pkl {question,image_name,labels,scores}
 
-    compute_target(val_qa_pairs, total_ans2label, intersection, 'test', 'img_name', data)   #dump validate target to .pkl {question,image_name,labels,scores}
-    compute_target(val_qa_pairs, total_ans2label, intersection, 'test', 'img_name', data, with_type=True)   #dump validate target to .pkl {question,image_name,labels,scores}
+    compute_target(val_qa_pairs, total_ans2label, intersection, 'test', img_col, data)   #dump validate target to .pkl {question,image_name,labels,scores}
+    compute_target(val_qa_pairs, total_ans2label, intersection, 'test', img_col, data, with_type=True)   #dump validate target to .pkl {question,image_name,labels,scores}
+
+    print("Process finished successfully!")
