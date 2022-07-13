@@ -289,8 +289,6 @@ def tfidf_from_questions(names, cfg, dictionary):
                 inds[0].append(c[1]); inds[1].append(c[0])
             else:
                 print(c[1])
-                print("interesting!")
-                input("w")
 
     if 'rad' in target:
         for name in names:

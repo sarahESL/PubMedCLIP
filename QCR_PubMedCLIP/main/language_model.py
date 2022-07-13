@@ -35,14 +35,8 @@ class WordEmbedding(nn.Module):
         assert weight_init.shape == (self.ntoken, self.emb_dim)
         self.emb.weight.data[:self.ntoken] = weight_init
         if tfidf is not None:
-            print(weight_init.shape)
-            print(tfidf_weights.shape)
-            print(tfidf.shape)
-            input("ff")
             if 0 < tfidf_weights.size:
                 weight_init = torch.cat([weight_init, torch.from_numpy(tfidf_weights)], 0)
-            print(weight_init.shape)
-            input("iw")
             weight_init = tfidf.matmul(weight_init) # (N x N') x (N', F)
             self.emb_.weight.requires_grad = True
         if self.cat:

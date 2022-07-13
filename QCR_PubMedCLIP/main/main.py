@@ -53,7 +53,7 @@ if __name__ == '__main__':
     # Fixed random seed
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed(cfg.SEED)
-    torch.backends.cudnn.benchmark = True 
+    torch.backends.cudnn.benchmark = True
     torch.backends.cudnn.deterministic = True
     torch.autograd.set_detect_anomaly(True)
     d = Dictionary.load_from_file(data_dir + '/dictionary.pkl')
@@ -66,24 +66,24 @@ if __name__ == '__main__':
     else:
         raise ValueError(f"Dataset {cfg.DATASET.DATASET} is not supported!")
     drop_last = False
-    drop_last_val = False 
+    drop_last_val = False
     train_loader = DataLoader(train_dataset, cfg.TRAIN.BATCH_SIZE, shuffle=True, num_workers=2,drop_last=drop_last,
             pin_memory=True)
     val_loader = DataLoader(val_dataset, cfg.TEST.BATCH_SIZE, shuffle=True, num_workers=2,drop_last=drop_last_val,
             pin_memory=True)
 
     # load the model
+    glove_weights_path = os.path.join(data_dir, "glove6b_init_300d.npy")
+    question_classify = classify_model(d.ntoken, glove_weights_path)
     if cfg.DATASET.DATASET == "SLAKE":
-        question_classify = classify_model(d.ntoken,'./data/data_slake/glove6b_init_300d.npy')
         ckpt = './saved_models/type_classifier_slake.pth'
         pretrained_model = torch.load(ckpt, map_location='cuda:0')['model_state']
     else:
-        question_classify = classify_model(d.ntoken,'./data/glove6b_init_300d.npy')
         ckpt = './saved_models/type_classifier.pth'
         qtype_ckpt = './saved_models/qtype_classifier.pth'
         pretrained_model = torch.load(ckpt, map_location='cuda:0')
     question_classify.load_state_dict(pretrained_model)
-    
+
     # training phase
     # create VQA model and question classify model
     if args.test:
