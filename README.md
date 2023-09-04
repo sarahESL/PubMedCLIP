@@ -13,16 +13,11 @@ arXiv e-prints 2112.13906, 2021.
 
 BibTeX entry:
 ```
-@article{EslamiDeMeloMeinel2021CLIPMedical,
-  author = {{Eslami}, Sedigheh and {de Melo}, Gerard and {Meinel}, Christoph},
-   title = {Does {CLIP} Benefit Visual Question Answering in the Medical Domain as Much as it Does in the General Domain?},
-  journal = {arXiv e-prints},
-  keywords = {Computer Science - Computer Vision and Pattern Recognition, Computer Science - Artificial Intelligence, Computer Science - Computation and Language, Computer Science - Machine Learning},
-  year = 2021,
-  month = dec,
-  eid = {arXiv:2112.13906},
-  archivePrefix = {arXiv},
-  eprint = {2112.13906},
-  primaryClass = {cs.CV},
+@inproceedings{eslami2023pubmedclip,
+  title={PubMedCLIP: How Much Does CLIP Benefit Visual Question Answering in the Medical Domain?},
+  author={Eslami, Sedigheh and Meinel, Christoph and De Melo, Gerard},
+  booktitle={Findings of the Association for Computational Linguistics: EACL 2023},
+  pages={1151--1163},
+  year={2023}
 }
 ```
